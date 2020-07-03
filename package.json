@@ -4,7 +4,7 @@
   "description": "fitverse api sandbox",
   "main": "server.js",
   "scripts": {
-    "start": "node serve.js",
+    "start": "node server.js",
     "server": "nodemon server.js"
   },
   "author": "me",
@@ -13,7 +13,7 @@
     "nodemon": "^2.0.4"
   },
   "dependencies": {
-    "brcrypt": "^1.0.7",
+    "bcryptjs": "^2.4.3",
     "concurrently": "^5.2.0",
     "express": "^4.17.1",
     "mongoose": "^5.9.21"
