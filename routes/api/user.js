@@ -16,23 +16,23 @@ router.post('/login', async (req, res) => {
 
 	try {
 		User.findOne({ email: email },
-			function (err, user) {
-				if (!user) throw Error('User does not exist');
-
+			async function (err, user) {
 				try {
-					const match = bcrypt.compare(password, user.password);
+					if (!user) throw Error('User does not exist');
+
+					const match = await bcrypt.compare(password, user.password);
 					if (!match) throw Error('Invalid credentials');
+
+					res.status(200).json({
+						user: {
+							id: user._id,
+							firstName: user.firstName,
+							lastName: user.lastName,
+						}
+					});
 				} catch (e) {
 					res.status(400).json({ err: e.message });
 				}
-
-				res.status(200).json({
-					user: {
-						id: user._id,
-						firstName: user.firstName,
-						lastName: user.lastName,
-					}
-				});
 			});
 	} catch (e) {
 		res.status(400).json({ err: e.message });
@@ -52,14 +52,14 @@ router.post('/signup', async (req, res) => {
 
 	try {
 		User.findOne({ email: email },
-			function (err, user) {
+			async function (err, user) {
 				try {
 					if (user) throw Error('User already exists');
 
-					const salt = bcrypt.genSalt(10);
+					const salt = await bcrypt.genSalt(10);
 					if (!salt) throw Error('Bcrypt salt error');
 
-					const hash = bcrypt.hash(password, salt);
+					const hash = await bcrypt.hash(password, salt);
 					if (!hash) throw Error('Bcrypt hash error');
 
 					const newUser = new User({
@@ -96,24 +96,22 @@ router.post('/deleteAccount', async (req, res) => {
 	try {
 		User.findOne({ email: email },
 			async function (err, user) {
-				if (!user) throw Error('User does not exist');
-
 				try {
+					if (!user) throw Error('User does not exist');
+
 					const match = await bcrypt.compare(password, user.password);
 					if (!match) throw Error('Invalid credentials');
+
+					console.log(user._id);
+					User.findByIdAndDelete(user._id, 
+						function(err){
+							res.status(200).json({
+								msg: "user deleted"
+							});
+						});					
 				} catch (e) {
 					res.status(400).json({ err: e.message });
 				}
-
-
-				User.find
-				res.status(200).json({
-					user: {
-						id: user._id,
-						firstName: user.firstName,
-						lastName: user.lastName,
-					}
-				});
 			});
 	} catch (e) {
 		res.status(400).json({ err: e.message });
