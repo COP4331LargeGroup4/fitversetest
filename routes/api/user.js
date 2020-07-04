@@ -71,7 +71,8 @@ router.post('/signup', async (req, res) => {
 						firstName,
 						lastName,
 						email,
-						password: hash
+						password: hash,
+						emailVerified: false
 					});
 
 					const savedUser = await newUser.save();
@@ -97,7 +98,7 @@ router.post('/signup', async (req, res) => {
 // @desc delete account
 router.post('/deleteAccount', async (req, res) => {
 	const { email, password, token } = req.body;
-	
+
 	if (!token) {
 		console.log(token);
 		res.status(403).json();
@@ -115,7 +116,6 @@ router.post('/deleteAccount', async (req, res) => {
 								const match = await bcrypt.compare(password, user.password);
 								if (!match) throw Error('Invalid credentials');
 
-								console.log(user._id);
 								User.findByIdAndDelete(user._id,
 									function (err) {
 										res.status(200).json({

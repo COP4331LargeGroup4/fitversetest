@@ -19,8 +19,11 @@ mongoose
 
 // Use Routes
 const User = require('./routes/api/user')
+const Workout = require('./routes/api/workout')
+const Exercise = require('./routes/api/exercise')
 app.use('/api/user', User);
-require('./config/passport');
+app.use('/api/workout', Workout);
+app.use('/api/exercise', Exercise);
 
 app.listen(port, () => console.log(`Server started on port ${port}`));
 
