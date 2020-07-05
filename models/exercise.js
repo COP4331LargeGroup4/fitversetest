@@ -10,7 +10,6 @@ const ExerciseSchema = new Schema({
 	name: {
 		type: String,
 		required: true,
-		unique: true
 	},
 	sets: {
 		type: String
