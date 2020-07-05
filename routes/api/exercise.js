@@ -29,6 +29,10 @@ router.post('/create', async (req, res) => {
 
 				try {
 
+					if (!name || !isCardio) {
+						httpErr = 400;
+						throw Error('Missing required fields');
+					}
 					if ((sets || reps || weight) && (time || distance)) {
 						httpErr = 400;
 						throw Error('Conflicting strength and cardio information');

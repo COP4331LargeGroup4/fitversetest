@@ -55,11 +55,15 @@ router.post('/signup', async (req, res) => {
 	}
 
 	// Create User
+	httpErr = 500;
 	try {
 		User.findOne({ email: email },
 			async function (err, user) {
 				try {
-					if (user) throw Error('User already exists');
+					if (user) {
+						httpErr = 400;
+						throw Error('User already exists');
+					}
 
 					const salt = await bcrypt.genSalt(10);
 					if (!salt) throw Error('Bcrypt salt error');
@@ -90,11 +94,11 @@ router.post('/signup', async (req, res) => {
 					});
 
 				} catch (e) {
-					res.status(400).json({ err: e.message });
+					res.status(httpErr).json({ err: e.message });
 				}
 			});
 	} catch (e) {
-		res.status(400).json({ err: e.message });
+		res.status(httpErr).json({ err: e.message });
 	}
 
 	//TODO: Actually Send email
