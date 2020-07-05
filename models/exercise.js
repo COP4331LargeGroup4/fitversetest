@@ -3,29 +3,37 @@ const Schema = mongoose.Schema;
 
 // create schema
 const ExerciseSchema = new Schema({
-	name:{
+	userId: {
 		type:String,
+		required: true
+	},
+	name: {
+		type: String,
 		required: true,
 		unique: true
 	},
-	sets:{
+	sets: {
 		type: String
 	},
-	reps:{
+	reps: {
 		type: String
 	},
-	weight:{
+	weight: {
 		type: String
 	},
-	time:{
+	time: {
 		type: String
 	},
-	distance:{
+	distance: {
 		type: String
 	},
-	notes:{
+	isCardio: {
+		type: Boolean,
+		required: true
+	},
+	notes: {
 		type: String
 	}
 });
 
-module.exports = User = mongoose.model('exercise', UserSchema);
+module.exports = Exercise = mongoose.model('exercise', ExerciseSchema);

@@ -9,11 +9,12 @@ const WorkoutSchema = new Schema({
 		unique: true
 	},
 	exercises:{
-		type: Array,
-		required: true
+		type: [String],
+		required: true,
+		default: []
 	},
 	weekly:{
-		type: Int16Array,
+		type: [Number],
 		required: true
 	},
 	startDate:{
@@ -28,4 +29,4 @@ const WorkoutSchema = new Schema({
 	}
 });
 
-module.exports = User = mongoose.model('workout', UserSchema);
+module.exports = Workout = mongoose.model('workout', WorkoutSchema);

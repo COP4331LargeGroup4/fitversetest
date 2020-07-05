@@ -19,4 +19,4 @@ const CompletedWorkoutSchema = new Schema({
 	}
 });
 
-module.exports = User = mongoose.model('completedWorkout', UserSchema);
+module.exports = CompletedWorkout = mongoose.model('completedWorkout', CompletedWorkoutSchema);
