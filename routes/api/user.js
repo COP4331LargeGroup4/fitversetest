@@ -1,19 +1,20 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { json } = require('express');
 
 
 // User model
 const User = require('../../models/user');
+const jwtConfig = require('./Config/jwtConfig');
 
 // @route POST api/user/login
 // @desc login user
 // @access  Public
 router.post('/login', async (req, res) => {
 	const { email, password } = req.body;
-
 	try {
 		User.findOne({ email: email },
 			async function (err, user) {
@@ -23,12 +24,15 @@ router.post('/login', async (req, res) => {
 					const match = await bcrypt.compare(password, user.password);
 					if (!match) throw Error('Invalid credentials');
 
-					res.status(200).json({
-						user: {
-							id: user._id,
-							firstName: user.firstName,
-							lastName: user.lastName,
-						}
+					jwt.sign({ _id: user._id }, jwtConfig.secretKey, { expiresIn: jwtConfig.timeout }, (err, token) => {
+						res.status(201).json({
+							token,
+
+							user: {
+								firstName: user.firstName,
+								lastName: user.lastName,
+							}
+						});
 					});
 				} catch (e) {
 					res.status(400).json({ err: e.message });
@@ -50,11 +54,16 @@ router.post('/signup', async (req, res) => {
 		return res.status(400).json({ msg: 'Please enter all fields' });
 	}
 
+	// Create User
+	httpErr = 500;
 	try {
 		User.findOne({ email: email },
 			async function (err, user) {
 				try {
-					if (user) throw Error('User already exists');
+					if (user) {
+						httpErr = 400;
+						throw Error('User already exists');
+					}
 
 					const salt = await bcrypt.genSalt(10);
 					if (!salt) throw Error('Bcrypt salt error');
@@ -66,55 +75,76 @@ router.post('/signup', async (req, res) => {
 						firstName,
 						lastName,
 						email,
-						password: hash
+						password: hash,
+						emailVerified: false
 					});
 
-					const savedUser = newUser.save();
+					const savedUser = await newUser.save();
 					if (!savedUser) throw Error('Something went wrong saving the user');
 
-					res.status(200).json({
-						user: {
-							id: savedUser._id,
-							firstName: savedUser.firstName,
-							lastName: savedUser.lastName,
-						}
+					jwt.sign({ _id: savedUser._id }, jwtConfig.secretKey, { expiresIn: jwtConfig.timeout }, (err, token) => {
+						res.status(201).json({
+							token,
+
+							user: {
+								firstName: savedUser.firstName,
+								lastName: savedUser.lastName,
+							}
+						});
 					});
+
 				} catch (e) {
-					res.status(400).json({ err: e.message });
+					res.status(httpErr).json({ err: e.message });
 				}
 			});
 	} catch (e) {
-		res.status(400).json({ err: e.message });
+		res.status(httpErr).json({ err: e.message });
 	}
+
+	//TODO: Actually Send email
+	jwt.sign({ email }, jwtConfig.secretKey, { expiresIn: jwtConfig.timeout }, (err, token) => {
+		// Send the email using the token string
+	});
 });
 
 // @route DELETE api/deleteAccount
 // @desc delete account
 router.post('/deleteAccount', async (req, res) => {
-	const { email, password } = req.body;
+	const { password, token } = req.body;
 
-	try {
-		User.findOne({ email: email },
-			async function (err, user) {
+	if (!token) {
+		res.status(403).json();
+	} else {
+		jwt.verify(token, jwtConfig.secretKey, (err, authData) => {
+			if (err) {
+				if (err.name == "TokenExpiredError") {
+					res.status(401).json()
+				} else {
+					res.status(403).json()
+				}
+			} else {
 				try {
-					if (!user) throw Error('User does not exist');
+					User.findById(authData._id,
+						async function (err, user) {
+							try {
+								if (!user) throw Error('User does not exist');
 
-					const match = await bcrypt.compare(password, user.password);
-					if (!match) throw Error('Invalid credentials');
+								const match = await bcrypt.compare(password, user.password);
+								if (!match) throw Error('Invalid credentials');
 
-					console.log(user._id);
-					User.findByIdAndDelete(user._id, 
-						function(err){
-							res.status(200).json({
-								msg: "user deleted"
-							});
-						});					
+								User.findByIdAndDelete(authData._id,
+									function (err) {
+										res.status(200).json();
+									});
+							} catch (e) {
+								res.status(400).json({ err: e.message });
+							}
+						});
 				} catch (e) {
 					res.status(400).json({ err: e.message });
 				}
-			});
-	} catch (e) {
-		res.status(400).json({ err: e.message });
+			}
+		});
 	}
 });
 
