@@ -10,7 +10,6 @@ const WorkoutSchema = new Schema({
 	name:{
 		type:String,
 		required: true,
-		unique: true
 	},
 	exercises:{
 		type: [String],
@@ -18,15 +17,15 @@ const WorkoutSchema = new Schema({
 		default: []
 	},
 	weekly:{
-		type: String,
+		type: [Number],
 		required: true
 	},
 	startDate:{
-		type : String,
+		type : Date,
 		required : true
 	},
 	endDate:{
-		type : String,
+		type : Date,
 	},
 	notes:{
 		type: String

@@ -100,7 +100,7 @@ router.post('/read', async (req, res) => {
 						throw Error('No id');
 					}
 
-					const exercise = await Exercise.findById(id);
+					var exercise = await Exercise.findById(id);
 
 					// Auth
 					if (!exercise) {
@@ -112,8 +112,10 @@ router.post('/read', async (req, res) => {
 						httpErr = 403;
 						throw Error('Invalid credentials')
 					}
+					
+					delete exercise['userId'];
 
-					res.status(200).json({ exercise });
+					res.status(200).json({exercise});
 
 				} catch (e) {
 					res.status(httpErr).json({ err: e.message });
