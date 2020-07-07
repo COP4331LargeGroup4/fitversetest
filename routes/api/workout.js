@@ -1,14 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const _ = require('underscore');
 
 // User model
 const Workout = require('../../models/workout');
 const Exercise = require('../../models/exercise');
 const jwtConfig = require('./Config/jwtConfig');
-const { promise } = require('bcrypt/promises');
+const { options } = require('mongoose');
 
 // @route POST api/workout/create
 // @desc Create workout
@@ -31,7 +31,7 @@ router.post('/create', async (req, res) => {
 
 				try {
 					// Verify request
-					if (!name || !exercises || !weekly || !startDate) {
+					if (!name || !weekly || !startDate) {
 						httpErr = 400;
 						throw Error('Missing required fields');
 					}
@@ -40,6 +40,7 @@ router.post('/create', async (req, res) => {
 						throw Error('There are 7 days in a week');
 					}
 
+					// TODO: make sure all exercises exist and belong to the user
 
 					var newWorkout = new Workout({
 						userId: authData._id,
@@ -157,6 +158,7 @@ router.post('/readAll', async (req, res) => {
 					var retWorkouts =
 						workouts.map((workout) => {
 							var retWorkout = {
+								_id: workout._id,
 								name: workout.name,
 								weekly: workout.weekly,
 								startDate: workout.startDate,
@@ -213,22 +215,75 @@ router.post('/update', async (req, res) => {
 						throw Error('No id');
 					}
 
-					const exercise = await Exercise.findById(id);
+					var workout = await Workout.findById(id);
 
-					if (!exercise) {
+					if (!workout) {
+						httpErr = 404
+						throw Error('Nonexistent Workout');
+					}
+
+					if (workout.userId != authData._id) {
+						httpErr = 403;
+						throw Error('Invalid credentials');
+					}	
+
+					Workout.findByIdAndUpdate(id,
+						{
+							name, 
+							exercises: _.difference(_.union(addExercises, workout.exercises), removeExercises),
+							weekly, startDate, endDate, notes
+						},
+						function (err) {
+							res.status(200).json();
+						})
+						.setOptions({ omitUndefined: true });
+				} catch (e) {
+					res.status(httpErr).json({ err: e.message });
+				}
+			}
+		});
+
+	};
+});
+
+// @route POST api/exercise/delete
+// @desc Delete single exercise by ID
+// @access  Public
+router.post('/delete', async (req, res) => {
+	const { token, id } = req.body;
+
+	httpErr = 500;
+	if (!token) {
+		res.status(403).json();
+	} else {
+		jwt.verify(token, jwtConfig.secretKey, async (err, authData) => {
+			if (err) {
+				if (err.name == "TokenExpiredError") {
+					res.status(401).json();
+				} else {
+					res.status(403).json();
+				}
+			} else {
+
+				try {
+					if (!id) {
+						httpErr = 400
+						throw Error('No id');
+					}
+
+					const workout = await Workout.findById(id);
+
+					if (!workout) {
 						httpErr = 404
 						throw Error('Nonexistent Exercise');
 					}
 
-					if (exercise.userId != authData._id) {
+					if (workout.userId != authData._id) {
 						httpErr = 403;
 						throw Error('Invalid credentials');
 					}
 
-					Exercise.findByIdAndUpdate(id,
-						{
-							name, sets, reps, weight, time, distance, isCardio, notes
-						},
+					Workout.findByIdAndDelete(id,
 						function (err) {
 							res.status(200).json();
 						});
@@ -237,7 +292,7 @@ router.post('/update', async (req, res) => {
 				}
 			}
 		});
-
+	}
 });
 
 module.exports = router;

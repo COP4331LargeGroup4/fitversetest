@@ -199,7 +199,8 @@ router.post('/update', async (req, res) => {
 						},
 						function (err) {
 							res.status(200).json();
-						});
+						})
+						.setOptions({ omitUndefined: true });;
 				} catch (e) {
 					res.status(httpErr).json({ err: e.message });
 				}
@@ -249,6 +250,9 @@ router.post('/delete', async (req, res) => {
 						function (err) {
 							res.status(200).json();
 						});
+					
+					// TODO Delete all references of the id from all workouts
+
 				} catch (e) {
 					res.status(httpErr).json({ err: e.message });
 				}
