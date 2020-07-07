@@ -35,10 +35,6 @@ router.post('/create', async (req, res) => {
 						httpErr = 400;
 						throw Error('Missing required fields');
 					}
-					if (weekly.length != 7) {
-						httpErr = 400;
-						throw Error('There are 7 days in a week');
-					}
 
 					// TODO: make sure all exercises exist and belong to the user
 
